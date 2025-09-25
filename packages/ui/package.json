@@ -4,7 +4,8 @@
   "private": true,
   "exports": {
     ".": "./src/index.ts",
-    "./styles.css": "./dist/index.css"
+    "./styles.css": "./dist/index.css",
+    "./globals.css": "./src/globals.css"
   },
   "scripts": {
     "build:styles": "tailwindcss -c ./tailwind.config.ts -i ./src/styles.css -o ./dist/index.css",

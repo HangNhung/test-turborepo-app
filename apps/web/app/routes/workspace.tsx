@@ -10,8 +10,6 @@ import {
   SelectTrigger, 
   SelectValue,
 } from "@repo/ui";
-import "flexlayout-react/style/light.css";
-import "react-data-grid/lib/styles.css";
 
 export default function WorkspaceRoute() {
   // State for header controls

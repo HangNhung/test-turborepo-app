@@ -1,3 +1,26 @@
 @import 'tailwindcss';
+@import "flexlayout-react/style/light.css";
+@import "react-data-grid/lib/styles.css";
 @import '@repo/tailwind-config';
-@import '@repo/ui/styles.css';
+
+@theme {
+  --font-sans:
+    "Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
+
+html,
+body {
+  @apply bg-white dark:bg-gray-950;
+}
+
+@layer components {
+  /* Override the CSS variables of Flex Layout based on our Tailwind config */
+  .flexlayout__layout {
+    --color-background: var(--background) !important;
+  }
+
+  .flexlayout__tab_moveable {
+    @apply bg-background;
+  }
+}
