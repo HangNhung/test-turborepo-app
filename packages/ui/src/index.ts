@@ -1,5 +1,5 @@
-export * from "./button";
-export * from "./card";
-export * from "./code";
-export * from "./input";
+// Shadcn UI components
+export * from "./components";
+
+// Utilities
 export * from "./lib/utils";

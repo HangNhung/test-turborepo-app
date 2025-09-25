@@ -8,7 +8,7 @@ import {
 } from "react-router";
 
 import type { Route } from "./+types/root";
-import "@repo/ui/globals.css";
+import "./globals.css";
 import "./app.css";
 
 export const links: Route.LinksFunction = () => [

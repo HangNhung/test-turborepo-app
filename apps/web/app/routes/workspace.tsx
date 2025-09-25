@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { Button } from "@repo/ui/button";
-import { Input } from "@repo/ui/input";
+import { Button, Input } from "@repo/ui";
 
 export default function WorkspaceRoute() {
   const [name, setName] = useState("");
@@ -21,7 +20,7 @@ export default function WorkspaceRoute() {
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
-          <Button type="submit" disabled={!name}>
+          <Button variant="outline" type="submit" disabled={!name}>
             Continue
           </Button>
         </form>

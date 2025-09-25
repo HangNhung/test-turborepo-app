@@ -4,34 +4,41 @@
   "private": true,
   "exports": {
     ".": "./src/index.ts",
-    "./*": "./src/*.tsx",
-    "./tailwind.config": "./tailwind.config.ts",
-    "./globals.css": "./src/globals.css"
+    "./styles.css": "./dist/index.css"
   },
   "scripts": {
+    "build:styles": "tailwindcss -c ./tailwind.config.ts -i ./src/styles.css -o ./dist/index.css",
+    "build:components": "tsc",
+    "dev:styles": "tailwindcss -c ./tailwind.config.ts -i ./src/styles.css -o ./dist/index.css --watch",
+    "dev:components": "tsc --watch",
     "lint": "eslint . --max-warnings 0",
     "generate:component": "turbo gen react-component",
     "check-types": "tsc --noEmit"
   },
   "devDependencies": {
     "@repo/eslint-config": "*",
+    "@repo/tailwind-config": "*",
     "@repo/typescript-config": "*",
     "@types/node": "^22.15.3",
     "@types/react": "19.1.0",
     "@types/react-dom": "19.1.1",
-    "eslint": "^9.34.0",
-    "typescript": "5.9.2",
-    "tailwindcss": "^4.1.4",
+    "@tailwindcss/cli": "^4.1.5",
+    "@tailwindcss/postcss": "^4.1.5",
     "autoprefixer": "^10.4.19",
-    "postcss": "^8.4.35"
+    "eslint": "^9.34.0",
+    "postcss": "^8.4.35",
+    "shadcn": "^3.3.1",
+    "tailwindcss": "^4.1.5",
+    "typescript": "5.9.2"
   },
   "dependencies": {
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
-    "@radix-ui/react-slot": "^1.0.2",
+    "@radix-ui/react-label": "^2.1.7",
+    "@radix-ui/react-slot": "^1.2.3",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
     "lucide-react": "^0.468.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
     "tailwind-merge": "^2.2.1"
   }
 }
