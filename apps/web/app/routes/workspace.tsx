@@ -1,4 +1,5 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useRef } from "react";
+import { useNavigate } from "react-router";
 import { Layout, Model, TabNode } from "flexlayout-react";
 import type { IJsonModel } from "flexlayout-react";
 import { DataGrid } from "react-data-grid";
@@ -11,10 +12,31 @@ import {
   SelectValue,
 } from "@repo/ui";
 
+// Define menu items with metadata
+interface MenuItem {
+  id: string;
+  name: string;
+  icon: string;
+  component: string;
+  route: string;
+}
+
+const menuItems: MenuItem[] = [
+  { id: "dashboard", name: "Dashboard", icon: "📊", component: "dashboard", route: "/" },
+  { id: "analytics", name: "Analytics", icon: "📈", component: "analytics", route: "/analytics" },
+  { id: "reports", name: "Reports", icon: "📁", component: "reports", route: "/reports" },
+  { id: "settings", name: "Settings", icon: "⚙️", component: "settings", route: "/settings" },
+  { id: "projects", name: "Projects", icon: "👥", component: "dashboard", route: "/projects" },
+];
+
 export default function WorkspaceRoute() {
   // State for header controls
   const [currentLayout, setCurrentLayout] = useState("default");
   const [model, setModel] = useState<Model | null>(null);
+  const layoutRef = useRef<Layout>(null);
+  const isDragging = useRef(false);
+  const draggedItem = useRef<MenuItem | null>(null);
+  const navigate = useNavigate();
   
   // Sample data for different grids
   const projectsData = [
@@ -97,24 +119,9 @@ export default function WorkspaceRoute() {
         tabEnableClose: true,
         tabEnableDrag: true,
         tabEnableRename: false,
-        borderSize: 25,
-        borderEnableAutoHide: true,
+        enableEdgeDock: true,
       },
-      borders: [
-        {
-          type: "border",
-          location: "left",
-          size: 200,
-          children: [
-            {
-              type: "tab",
-              name: "Navigation",
-              component: "navigation",
-              enableClose: false,
-            },
-          ],
-        },
-      ],
+      borders: [],
       layout: {
         type: "row",
         weight: 100,
@@ -159,23 +166,9 @@ export default function WorkspaceRoute() {
         tabEnableClose: true,
         tabEnableDrag: true,
         tabEnableRename: false,
-        borderSize: 25,
-        borderEnableAutoHide: true,
+        enableEdgeDock: true,
       },
       borders: [
-        {
-          type: "border",
-          location: "left",
-          size: 200,
-          children: [
-            {
-              type: "tab",
-              name: "Navigation",
-              component: "navigation",
-              enableClose: false,
-            },
-          ],
-        },
         {
           type: "border",
           location: "bottom",
@@ -262,41 +255,95 @@ export default function WorkspaceRoute() {
     setCurrentLayout(value);
   }, []);
 
+  // Handle drag start from sidebar menu items
+  const handleMenuItemDragStart = useCallback((e: React.DragEvent, item: MenuItem) => {
+    isDragging.current = true;
+    draggedItem.current = item;
+    
+    console.log("Drag started for:", item);
+    
+    // Store the menu item data in the drag event
+    // We need to set some data to make the drag valid, but we'll use the ref for actual data
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", "menu-item"); // Just a marker
+    console.log("Drag data set for item:", item.name);
+
+    // Optional: Create a custom drag image
+    if (e.dataTransfer.setDragImage) {
+      const dragImage = document.createElement("div");
+      dragImage.textContent = `${item.icon} ${item.name}`;
+      dragImage.style.cssText = `
+        position: absolute;
+        top: -1000px;
+        padding: 8px 12px;
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        font-size: 14px;
+        font-weight: 500;
+        color: #374151;
+      `;
+      document.body.appendChild(dragImage);
+      e.dataTransfer.setDragImage(dragImage, 0, 0);
+      setTimeout(() => document.body.removeChild(dragImage), 0);
+    }
+  }, []);
+
+  const handleMenuItemDragEnd = useCallback(() => {
+    isDragging.current = false;
+    draggedItem.current = null;
+  }, []);
+
+  // Handle click for navigation (only if not dragging)
+  const handleMenuItemClick = useCallback((item: MenuItem) => {
+    if (isDragging.current) {
+      return;
+    }
+
+    // Navigate to the route
+    navigate(item.route);
+  }, [navigate]);
+
+  // Handle external drag into FlexLayout
+  const onExternalDrag = useCallback((e: React.DragEvent) => {
+    console.log("onExternalDrag called");
+    
+    // Use the ref to get the dragged item since getData() doesn't work during dragenter
+    const item = draggedItem.current;
+    console.log("Dragged item from ref:", item);
+    
+    if (item) {
+      // Return the node configuration for FlexLayout to add
+      const result = {
+        json: {
+          type: "tab",
+          name: item.name,
+          component: item.component,
+        },
+        onDrop: () => {
+          console.log("Drop completed for:", item.name);
+          // Reset dragging state when drop completes
+          isDragging.current = false;
+          draggedItem.current = null;
+        },
+      };
+      console.log("Returning result:", result);
+      return result;
+    }
+    
+    // Reset dragging state if drop fails
+    console.log("No dragged item found");
+    isDragging.current = false;
+    draggedItem.current = null;
+    return undefined;
+  }, []);
+
   // Component factory function
   const factory = (node: TabNode) => {
     const component = node.getComponent();
 
     switch (component) {
-      case "navigation":
-        return (
-          <div className="p-4 h-full">
-            <h3 className="font-bold mb-4 text-gray-800">Navigation</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. 
-              Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-            </p>
-            <ul className="space-y-2">
-              <li className="cursor-pointer hover:text-blue-600 p-2 rounded hover:bg-blue-50">
-                📊 Dashboard
-              </li>
-              <li className="cursor-pointer hover:text-blue-600 p-2 rounded hover:bg-blue-50">
-                📁 Projects
-              </li>
-              <li className="cursor-pointer hover:text-blue-600 p-2 rounded hover:bg-blue-50">
-                👥 Team
-              </li>
-              <li className="cursor-pointer hover:text-blue-600 p-2 rounded hover:bg-blue-50">
-                ⚙️ Settings
-              </li>
-            </ul>
-            <div className="mt-6 p-3 bg-blue-50 rounded">
-              <h4 className="font-semibold text-blue-800 mb-2">Quick Stats</h4>
-              <p className="text-sm text-blue-600">Active Users: 1,234</p>
-              <p className="text-sm text-blue-600">Online Now: 56</p>
-            </div>
-          </div>
-        );
-
       case "dashboard":
         return (
           <div className="h-full flex flex-col">
@@ -506,7 +553,7 @@ export default function WorkspaceRoute() {
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="min-w-0 flex-shrink">
             <h1 className="text-xl font-bold text-gray-900 dark:text-white">Workspace Dashboard</h1>
-            <p className="text-sm text-gray-600 dark:text-slate-400">Drag tabs and panels to customize your layout</p>
+            <p className="text-sm text-gray-600 dark:text-slate-400">Click menu items to navigate or drag them into the workspace</p>
           </div>
           
           {/* Header Controls */}
@@ -539,13 +586,59 @@ export default function WorkspaceRoute() {
         </div>
       </div>
       
-      {/* FlexLayout Container */}
-      <div className="flex-1 bg-gray-50 dark:bg-slate-800 relative">
-        <Layout 
-          model={model} 
-          factory={factory}
-          onModelChange={setModel}
-        />
+      {/* Main Content Area with Sidebar and FlexLayout */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* External Sidebar */}
+        <div className="w-64 bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-700 flex-shrink-0 overflow-y-auto">
+          <div className="p-4">
+            <h3 className="font-bold mb-4 text-gray-800 dark:text-white">Navigation</h3>
+            <p className="text-sm text-gray-600 dark:text-slate-400 mb-4">
+              Click to navigate or drag to workspace
+            </p>
+            <ul className="space-y-2">
+              {menuItems.map((item) => (
+                <li
+                  key={item.id}
+                  draggable={true}
+                  onDragStart={(e) => handleMenuItemDragStart(e, item)}
+                  onDragEnd={handleMenuItemDragEnd}
+                  onClick={() => handleMenuItemClick(item)}
+                  onMouseDown={() => {
+                    // Add a small delay to distinguish between click and drag
+                    setTimeout(() => {
+                      if (!isDragging.current) {
+                        // This was a click, not a drag
+                      }
+                    }, 200);
+                  }}
+                  className="cursor-move text-white hover:text-blue-600 dark:hover:text-blue-400 p-2 rounded hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors select-none"
+                  title="Click to navigate or drag to workspace"
+                >
+                  <span className="inline-flex items-center gap-2">
+                    <span>{item.icon}</span>
+                    <span>{item.name}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-6 p-3 bg-blue-50 dark:bg-slate-800 rounded">
+              <h4 className="font-semibold text-blue-800 dark:text-blue-400 mb-2">Quick Stats</h4>
+              <p className="text-sm text-blue-600 dark:text-blue-400">Active Users: 1,234</p>
+              <p className="text-sm text-blue-600 dark:text-blue-400">Online Now: 56</p>
+            </div>
+          </div>
+        </div>
+
+        {/* FlexLayout Container */}
+        <div className="flex-1 bg-gray-50 dark:bg-slate-800 relative">
+          <Layout 
+            ref={layoutRef}
+            model={model} 
+            factory={factory}
+            onModelChange={setModel}
+            onExternalDrag={onExternalDrag}
+          />
+        </div>
       </div>
     </div>
   );
